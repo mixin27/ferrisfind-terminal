@@ -6,7 +6,8 @@ use std::io::{self, Write};
 pub enum AppError {
     EmptyDataDir,
     MissingDataDir,
-    Output(io::Error),
+    NotATerminal,
+    Terminal(io::Error),
 }
 
 impl AppError {
@@ -15,7 +16,7 @@ impl AppError {
     pub fn report(&self, output: &mut impl Write) -> io::Result<()> {
         let event = match self {
             Self::EmptyDataDir | Self::MissingDataDir => "configuration_failed",
-            Self::Output(_) => "output_failed",
+            Self::NotATerminal | Self::Terminal(_) => "terminal_failed",
         };
         writeln!(
             output,
@@ -33,7 +34,11 @@ impl fmt::Display for AppError {
                 f,
                 "cannot determine an absolute application-data directory; pass --data-dir PATH"
             ),
-            Self::Output(source) => write!(f, "could not write CLI output: {source}"),
+            Self::NotATerminal => write!(
+                f,
+                "interactive launch requires a terminal on stdin and stdout; use --help for CLI usage"
+            ),
+            Self::Terminal(source) => write!(f, "terminal operation failed: {source}"),
         }
     }
 }
@@ -41,7 +46,7 @@ impl fmt::Display for AppError {
 impl Error for AppError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            Self::Output(source) => Some(source),
+            Self::Terminal(source) => Some(source),
             _ => None,
         }
     }
@@ -53,11 +58,11 @@ mod tests {
 
     #[test]
     fn diagnostics_escape_control_characters_into_one_line() {
-        let error = AppError::Output(io::Error::other("bad\n\x1b[31m\"output\""));
+        let error = AppError::Terminal(io::Error::other("bad\n\x1b[31m\"output\""));
         let mut output = Vec::new();
         error.report(&mut output).unwrap();
         let text = String::from_utf8(output).unwrap();
-        assert!(text.starts_with("level=error event=output_failed message="));
+        assert!(text.starts_with("level=error event=terminal_failed message="));
         assert_eq!(text.lines().count(), 1);
         assert!(!text.contains('\x1b'));
         assert!(text.contains("\\n"));

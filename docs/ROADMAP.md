@@ -22,14 +22,21 @@ unverified. See `TESTING.md` for the Phase 0 record.
 
 ## Phase 1 — TUI shell with fictional in-memory records
 
-- [ ] Enter/restore raw mode and alternate screen via guard.
-- [ ] Implement responsive wide/medium/narrow screen layouts.
-- [ ] Implement header, search bar, result list, inspector, footer, help overlay.
-- [ ] Implement focus-aware keymap and app reducer.
-- [ ] Seed 20–50 clearly fictional static records in memory for display only.
-- [ ] Test keyboard focus, selection clamping, terminal size calculations and quit paths.
+- [x] Enter/restore raw mode and alternate screen via guard.
+- [x] Implement responsive wide/medium/narrow screen layouts.
+- [x] Implement header, search bar, result list, inspector, footer, help overlay.
+- [x] Implement focus-aware keymap and app reducer.
+- [x] Seed 20–50 clearly fictional static records in memory for display only.
+- [x] Test keyboard focus, selection clamping, terminal size calculations and quit paths.
 
 **Gate:** `cargo run` launches navigable cyberpunk UI; no SQLite required; restoring terminal verified manually.
+
+Verified 2026-10-16 on macOS aarch64 / stable Rust 1.99.0: fmt, clippy, check,
+24 deterministic unit tests, 5 CLI tests and the help command pass. The opt-in
+real-TTY error/panic test passes separately. Interactive agent-driven PTY inspection
+confirmed Unicode entry, focus routing, inspector scrolling, help and q restoration.
+The reproducible PTY suite also passes resize, paste, Ctrl+C and Unix signal exits.
+No SQLite or actual search was added. See `TESTING.md` for details and platform limits.
 
 ## Phase 2 — Persistent SQLite storage
 

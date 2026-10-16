@@ -20,7 +20,7 @@ fn help_and_version_work_without_tty_or_data_directory() {
         assert!(output.status.success());
         assert!(output.stderr.is_empty());
         let help = stdout(&output);
-        for expected in ["ferrisfind", "--data-dir", "--help", "--version", "Phase 0"] {
+        for expected in ["ferrisfind", "--data-dir", "--help", "--version", "Phase 1"] {
             assert!(help.contains(expected), "missing {expected}: {help}");
         }
         for future_command in ["init", "seed", "import", "doctor"] {
@@ -68,24 +68,24 @@ fn unavailable_default_is_actionable_and_structured() {
 }
 
 #[test]
-fn explicit_paths_work_without_environment_defaults() {
+fn explicit_paths_reach_tty_validation_without_environment_defaults() {
     for args in [
         vec!["--data-dir", "local data/မြန်မာ"],
         vec!["--data-dir=local data/မြန်မာ"],
     ] {
         let output = command().args(args).output().unwrap();
-        assert!(output.status.success());
-        assert!(output.stderr.is_empty());
-        let escaped_path = format!("{:?}", std::path::Path::new("local data/မြန်မာ"));
-        assert!(stdout(&output).contains(&escaped_path));
-        assert!(stdout(&output).contains("not implemented yet"));
-        assert!(!output.stdout.contains(&0x1b));
+        assert_eq!(output.status.code(), Some(1));
+        assert!(output.stdout.is_empty());
+        let error = String::from_utf8(output.stderr).unwrap();
+        assert!(error.contains("event=terminal_failed"));
+        assert!(error.contains("requires a terminal"));
+        assert!(!error.contains('\x1b'));
     }
 }
 
 #[test]
 fn startup_and_help_do_not_create_data_directory() {
-    let path = std::env::temp_dir().join(format!("ferrisfind-phase0-{}", std::process::id()));
+    let path = std::env::temp_dir().join(format!("ferrisfind-phase1-{}", std::process::id()));
     assert!(!path.exists(), "test requires a nonexistent path");
     for flag in [None, Some("--help"), Some("--version")] {
         let mut process = command();
@@ -94,7 +94,7 @@ fn startup_and_help_do_not_create_data_directory() {
             process.arg(flag);
         }
         let output = process.output().unwrap();
-        assert!(output.status.success());
+        assert_eq!(output.status.success(), flag.is_some());
         assert!(!path.exists());
     }
 }

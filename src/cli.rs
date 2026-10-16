@@ -5,9 +5,9 @@ use clap::{Arg, Command, value_parser};
 pub fn command() -> Command {
     Command::new("ferrisfind")
         .version(env!("CARGO_PKG_VERSION"))
-        .about("FerrisFind Terminal: browse authorized local data (Phase 0 CLI foundation)")
-        .after_help("The TUI, storage and import commands are not implemented yet.\n\
-                     This version reports the selected data directory without creating it.")
+        .about("FerrisFind Terminal: Phase 1 TUI with clearly fictional in-memory records")
+        .after_help("Launch in a terminal to browse 24 fictional fixtures. F1 opens help; q quits outside search.\n\
+                     Search, storage and import commands are not connected yet. No data files are created.")
         .arg(
             Arg::new("data-dir")
                 .long("data-dir")

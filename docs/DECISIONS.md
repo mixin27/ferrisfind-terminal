@@ -68,6 +68,52 @@ lookups without mutating global state. Later phases add actual operations and te
 lifecycle handling at their gates. CI checks stable Rust on Linux, macOS and Windows;
 only results actually run locally or in CI may be reported as verified.
 
+## ADR-008 — Phase 1 fixture shell and terminal lifecycle
+**Date:** 2026-10-16
+
+**Status:** Accepted
+
+### Context
+Phase 1 adds a navigable shell while actual search and storage remain later gates.
+The search field must be useful for keyboard testing without implying backend
+results. Terminal teardown must work on failures as well as normal quit paths.
+
+### Decision
+Use the resolved, locally inspected Ratatui 0.30.2 and Crossterm 0.29.0 APIs.
+Use unicode-segmentation for grapheme editing and unicode-width for cursor columns.
+Enable Ratatui's `unstable-rendered-line-info` feature solely to bound inspector
+scrolling using the same wrapping algorithm as its renderer; Cargo.lock fixes the
+resolved version and render tests cover this API. Review this feature on upgrades.
+
+Show 24 fixed fictional workshop records, with stable fixture IDs, no scores,
+one labeled source and no simulated filtering. Enter in search displays an explicit
+"not connected" notice and retains the fixtures. This supersedes ADR-007's temporary
+status-printing launch behavior. CLI data-directory resolution remains, with no writes.
+
+Use an app-owned reducer and event loop, presentation-only TUI modules and a small
+domain fixture shape. Search text is bounded at 256 Unicode scalars; cursor movement
+and deletion operate on graphemes. Render wide panels at 120+ columns, an inspector
+overlay at 80–119, focused source/inspector views at 60–79, and a resize message
+below 60 columns or 16 rows. NO_COLOR/TERM=dumb selects monochrome; indexed colors
+are the fallback when truecolor is not advertised. Focus never relies solely on color.
+
+An RAII guard tracks setup attempts before fallible terminal calls and attempts
+all cleanup steps even if one fails. Explicit cleanup errors propagate; Drop retries
+failed cleanup. Install a chained panic hook once at the application boundary to
+restore before printing panic diagnostics. No logs go into the active TUI.
+
+On Unix, signal-hook handlers for SIGINT/SIGTERM/SIGHUP only set an Arc<AtomicBool>;
+the event loop checks it through bounded 100ms event polling. This is the sole shared
+flag and is required for orderly external interruptions. No worker threads, shared
+app state, async runtime or database are introduced. Idle polling does not redraw.
+
+### Consequences
+Interactive startup requires stdin/stdout TTYs. CLI help/version remain usable
+in pipes. Terminal controls can be failure-tested independently of TTYs; PTY tests
+and an opt-in error/panic test validate real teardown separately. SIGKILL, process
+abort, and disconnected terminal output cannot be recovered by a guard. All data
+remains fictional and ephemeral until a later explicitly requested milestone.
+
 ## ADR template
 
 ```markdown

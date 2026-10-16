@@ -1,6 +1,6 @@
 # FerrisFind Terminal — Documentation index
 
-**Status:** Phase 0 CLI foundation implemented; later phases remain specifications
+**Status:** Phase 1 fictional-data TUI shell implemented; later phases remain specifications
 
 **Version:** 1.0  
 **Primary language:** Rust  
@@ -27,11 +27,12 @@ Full-screen TUI; responsive layouts; keyboard-first interactions; fictional samp
 
 Real-world personal intelligence dossiers, third-party scraping, credentials discovery, remote system access, internet connectors, arbitrary SQL execution, AI agents, PostgreSQL connectivity, cloud sync and custom-built search index. Cosmetic terminals must display real, local results.
 
-## Example commands (proposed API, not yet implemented)
+## Command status
 
-Phase 0 implements `ferrisfind --help`, `ferrisfind --version` and `--data-dir PATH`.
-Bare launch reports the configured directory and exits without filesystem writes.
-The TUI and subcommands below remain planned. See the root README for current usage.
+`ferrisfind --help`, `ferrisfind --version` and `--data-dir PATH` are implemented.
+Bare launch opens the Phase 1 TUI with 24 fictional fixtures, without filesystem
+writes. Search is not connected. The `init`, `seed`, `import` and `doctor`
+subcommands below remain planned. See the root README for current usage.
 
 ```sh
 ferrisfind

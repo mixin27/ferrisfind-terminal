@@ -38,6 +38,17 @@ tests/
 
 Use the smallest structure needed at each phase; these are target module boundaries, not an instruction to create every empty file in advance.
 
+### Implemented through Phase 1
+
+`main` resolves CLI configuration and composes the application. `domain.rs` holds
+the display record shape and 24 static fictional fixtures. `app.rs` owns state and
+the pure action reducer; `app/event_loop.rs` owns the single event loop.
+`tui/` holds key mapping/help, layout, theme, rendering, the terminal guard and
+Unix interrupt notifications. Rendering accepts immutable app state; ephemeral
+Ratatui list state only scrolls the view to the reducer's selection.
+Before rendering, the event loop updates the inspector's scroll bound from the
+wrapped line count and current size. No search/storage/importer modules exist yet.
+
 ## Domain shapes (illustrative, not obligatory exact API)
 
 ```rust

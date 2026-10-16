@@ -10,3 +10,10 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.6.7", default-features = false, features = ["std", "help", "usage", "error-context"] }
+crossterm = "0.29.0"
+ratatui = { version = "0.30.2", default-features = false, features = ["crossterm", "unstable-rendered-line-info"] }
+unicode-segmentation = "1.13.3"
+unicode-width = "0.2.2"
+
+[target.'cfg(unix)'.dependencies]
+signal-hook = "0.3.18"
