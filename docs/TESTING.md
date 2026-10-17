@@ -116,6 +116,64 @@ need human/platform QA. The Ratatui rendered-line-info feature is currently mark
 unstable and must be reviewed during dependency upgrades. Database, import, actual
 search and worker checks below belong to later milestones.
 
+## Phase 2 verification — 2026-10-17
+
+Environment: macOS aarch64, stable rustc/Cargo 1.99.0; rusqlite 0.40.2 with bundled
+SQLite 3.53.2. The installed SQLite build defines ENABLE_FTS5, and each repository
+open additionally executes an FTS5 temporary-table probe. Runtime stays offline;
+only build dependencies were fetched from crates.io with approval.
+
+### Automated checks
+
+- `cargo fmt --all -- --check`: passed.
+- `cargo clippy --all-targets -- -D warnings`: passed.
+- `cargo check`: passed.
+- `cargo test`: 51 passed (2 library unit, 23 binary unit, 9 CLI integration,
+  17 storage integration); one TTY-only test ignored here and passed separately.
+- `cargo run -- --help`: passed and lists init/seed/doctor.
+- `git diff --check`: passed.
+
+Temporary-database coverage includes:
+
+- Repeatable migration and transactional rollback under a simulated SQLite page
+  limit; no partial schema, application ID or user_version after failure.
+- Rejection of newer schema versions, unrelated databases, corrupt files, missing
+  expected triggers, invalid directory paths and missing doctor targets.
+- Creation of 1,000 deterministic fictional records, reopening and comparing every
+  record, independent generator reproducibility, FTS matches and completed job counts.
+- Parameterized source and record CRUD, source renaming, bounded deterministic source
+  pages, UUID text identity, stable rowids/creation timestamps on repository updates.
+- FTS insert/title update/content update/delete, direct rowid updates, source moves,
+  source deletion cascades, explicit rebuild and external-content integrity checks.
+- Duplicate/invalid batch rollback, rejected orphan records/moves, injected mid-seed
+  and update failures, source counts, retained job history and reseeding after deletion.
+- Existing index corruption blocks seeding without being silently repaired. Doctor
+  detects broken counts, references and FTS entries without repairing them.
+- Record size, blank/invalid metadata/NUL validation, Unicode and SQL-looking text,
+  seed count bounds and two concurrent CLI seed processes committing exactly one dataset.
+
+All storage tests hold their TempDir for the repository's lifetime. Initial fixture
+lifetime errors were corrected before the complete suite passed. Tests use only
+fictional content and never the real user data directory.
+
+### CLI and TTY smoke checks (separate)
+
+Ran `cargo run --offline -- --data-dir <temporary-directory> init`, then `seed`,
+then `doctor` as separate processes. Observed SQLite 3.53.2, schema 1, FTS5 verified,
+0 sources/0 records after init and 1 source/1,000 records after seed and doctor.
+The temporary directory was removed after the check.
+
+Ran `cargo build --offline` and `python3 scripts/pty_smoke.py`; all six existing
+scenarios passed: navigation/paste/resize/q, Ctrl+C, SIGINT, SIGTERM, SIGHUP and the
+ignored real-TTY error/panic cleanup test. Terminal configuration and screen/cursor/
+paste restoration checks passed using the documented Phase 1 PENDIN handling.
+These are automated PTY regression checks; no additional human desktop-terminal
+visual QA was performed for Phase 2.
+
+Linux/Windows runtime execution and hosted CI remain unverified in this session.
+No search latency or seed throughput benchmark is claimed. Persistent TUI queries,
+safe user search grammar, ranking, imports and query sequence IDs remain future work.
+
 ## Required test matrix
 
 | Domain | Cases |

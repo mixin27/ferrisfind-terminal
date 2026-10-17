@@ -5,16 +5,23 @@ use clap::{Arg, Command, value_parser};
 pub fn command() -> Command {
     Command::new("ferrisfind")
         .version(env!("CARGO_PKG_VERSION"))
-        .about("FerrisFind Terminal: Phase 1 TUI with clearly fictional in-memory records")
-        .after_help("Launch in a terminal to browse 24 fictional fixtures. F1 opens help; q quits outside search.\n\
-                     Search, storage and import commands are not connected yet. No data files are created.")
+        .about("FerrisFind Terminal: Phase 2 local SQLite storage and fictional-data TUI")
+        .after_help("init/seed/doctor work without a terminal.\n\
+                     Bare launch still shows 24 in-memory fictional fixtures; persisted data is not yet connected to the TUI.")
         .arg(
             Arg::new("data-dir")
                 .long("data-dir")
+                .global(true)
                 .value_name("PATH")
                 .value_parser(value_parser!(PathBuf))
                 .help("Override the OS application-data directory; relative paths use the current directory"),
         )
+        .subcommand(Command::new("init").about("Initialize or verify the local SQLite database"))
+        .subcommand(Command::new("seed").about("Create one deterministic fictional dataset (refuses duplicate seeds)")
+            .arg(Arg::new("count").long("count").value_name("COUNT").default_value("1000")
+                .value_parser(value_parser!(u32).range(1..=100_000))
+                .help("Number of fictional records, from 1 to 100000")))
+        .subcommand(Command::new("doctor").about("Check an existing database and FTS index without repairing them"))
 }
 
 #[cfg(test)]

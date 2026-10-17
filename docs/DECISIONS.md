@@ -114,6 +114,58 @@ and an opt-in error/panic test validate real teardown separately. SIGKILL, proce
 abort, and disconnected terminal output cannot be recovered by a guard. All data
 remains fictional and ephemeral until a later explicitly requested milestone.
 
+## ADR-009 — Phase 2 CLI persistence and atomic invariants
+**Date:** 2026-10-17
+
+**Status:** Accepted
+
+### Context
+Phase 2 requires persistence and FTS consistency while actual TUI search belongs
+to Phase 3. ADR-005 requires a dedicated owner for SQLite as soon as it is integrated.
+Seed reruns, database identity, job retention and count maintenance needed explicit policy.
+
+### Decision
+Use rusqlite 0.40.2 with bundled SQLite 3.53.2, verified against the installed build
+and a runtime FTS5 probe. Use UUID v5 for deterministic fictional identities,
+serde_json for structured metadata, thiserror for storage errors and tempfile only
+in tests. Add a library target within the existing package to expose domain/storage
+to integration tests; no workspace or external service is introduced.
+
+Implement CLI-only persistence through `init`, `seed` and `doctor`. Each operation
+owns a connection inside a named worker and returns a typed result through a bounded
+channel. There are no DB calls on the TUI thread, async APIs or runtime networking.
+Keep the existing labeled in-memory TUI until Phase 3 connects actual search.
+
+Use `ferrisfind.sqlite3`, a FerrisFind application ID and explicit user_version
+migrations under an immediate transaction. Refuse unrecognized or newer databases.
+Enable foreign keys on every application connection and a bounded busy timeout.
+Use parameterized CRUD with immutable external UUID identity; FTS joins integer rowids.
+
+The initial migration includes FTS and source-count triggers. Update handles both
+content and source/rowid changes. Source deletion cascades records, removes their
+FTS entries, and nulls historical job references. Repository validators bound text
+and metadata and require a JSON object; import parsing remains future work.
+
+Generator v1 cycles fixed fictional templates and derives record UUIDs from a fixed
+namespace plus ordinal. Content/IDs are reproducible; created_at reflects actual writes.
+Default count is 1,000, maximum 100,000. A duplicate seed source is an explicit error.
+Sources, jobs, records, final FTS rebuild and integrity validation commit atomically.
+Failed transactions roll everything back, including their job. Job UUIDs include
+the transactionally allocated job ordinal so retained history does not block reseeding
+after an explicit repository source deletion.
+
+`doctor` reports SQLite/FK/count/index failures and never repairs them. FTS integrity
+uses rank=1 to validate against external content, not merely the index structure.
+It needs write access for the FTS command and transaction, but leaves records intact.
+
+### Consequences
+Phase 2 storage is useful without a TTY, and 1,000 fictional records survive process
+restarts. The display fixture and persisted record types remain distinct until the
+next phase. Bulk seeds currently maintain the index incrementally and then rebuild
+it once before commit, favoring explicit consistency over unmeasured optimization.
+The future search worker must add bounded requests and sequence IDs when the TUI
+begins submitting queries. No import format, search grammar or ranking was implemented.
+
 ## ADR template
 
 ```markdown

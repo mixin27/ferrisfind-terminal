@@ -40,14 +40,22 @@ No SQLite or actual search was added. See `TESTING.md` for details and platform 
 
 ## Phase 2 — Persistent SQLite storage
 
-- [ ] Choose an FTS5-enabled SQLite build and verify capability on startup.
-- [ ] Add versioned migrations, source/record model, import_jobs and FTS5 triggers.
-- [ ] Implement repository with parameterized CRUD and source listing.
-- [ ] Implement `init`, `seed`, and optional `doctor` commands.
-- [ ] Provide reproducible synthetic dataset generator and deterministic fixtures.
-- [ ] Test migrations, storage persistence, CRUD, FTS updates/deletes.
+- [x] Choose an FTS5-enabled SQLite build and verify capability on startup.
+- [x] Add versioned migrations, source/record model, import_jobs and FTS5 triggers.
+- [x] Implement repository with parameterized CRUD and source listing.
+- [x] Implement `init`, `seed`, and optional `doctor` commands.
+- [x] Provide reproducible synthetic dataset generator and deterministic fixtures.
+- [x] Test migrations, storage persistence, CRUD, FTS updates/deletes.
 
 **Gate:** 1,000 fictional records persist across restarts and table/index invariants pass tests.
+
+Verified 2026-10-17 on macOS aarch64 / Rust 1.99.0 with bundled SQLite 3.53.2:
+fmt, clippy, check, 51 automated tests, help and temporary-directory init/seed/doctor
+smoke checks pass. The PTY regression suite passes all six scenarios, including the
+separate ignored error/panic test. Source/record/FTS/job rollback, index rebuild,
+source cascades, concurrent seeding and 1,000-row persistence are covered.
+The TUI still uses labeled Phase 1 fixtures; actual search/imports remain later gates.
+Hosted CI and Linux/Windows runtime verification remain pending. See `TESTING.md`.
 
 ## Phase 3 — Actual search and inspection
 

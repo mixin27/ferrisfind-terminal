@@ -1,6 +1,6 @@
 # FerrisFind Terminal — Documentation index
 
-**Status:** Phase 1 fictional-data TUI shell implemented; later phases remain specifications
+**Status:** Phase 2 SQLite storage and CLI implemented; later phases remain specifications
 
 **Version:** 1.0  
 **Primary language:** Rust  
@@ -29,10 +29,11 @@ Real-world personal intelligence dossiers, third-party scraping, credentials dis
 
 ## Command status
 
-`ferrisfind --help`, `ferrisfind --version` and `--data-dir PATH` are implemented.
-Bare launch opens the Phase 1 TUI with 24 fictional fixtures, without filesystem
-writes. Search is not connected. The `init`, `seed`, `import` and `doctor`
-subcommands below remain planned. See the root README for current usage.
+`ferrisfind --help`, `ferrisfind --version`, `--data-dir PATH`, `init`, `seed` and
+`doctor` are implemented. Storage commands persist a local FTS5-enabled SQLite
+database. Bare launch still opens the Phase 1 TUI with 24 in-memory fictional
+fixtures, without database access. Actual search and `import` remain planned.
+See the root README for current usage.
 
 ```sh
 ferrisfind

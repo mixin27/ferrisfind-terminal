@@ -4,7 +4,49 @@
 
 A source represents a single imported file/dataset (or deterministic seed dataset). A record belongs to one source. Avoid claiming semantic entity matching across sources. Prefer UUID text IDs for external record identity; keep SQLite `INTEGER PRIMARY KEY` for joins/FTS rowids.
 
-## Proposed migration 001 — schema
+## Implemented Phase 2 storage
+
+The canonical schema is [`../migrations/001_initial.sql`](../migrations/001_initial.sql).
+`rusqlite` 0.40.2 uses bundled SQLite 3.53.2, compiled with FTS5. Every repository
+open checks the compile option and creates/queries/drops a temporary FTS5 table
+before accessing application schema. Connections enable foreign keys and a
+two-second busy timeout; filesystem paths are opened without SQLite URI mode.
+
+The database file is `ferrisfind.sqlite3` in the selected data directory.
+`PRAGMA application_id` identifies FerrisFind (`0x4646544d`); `user_version` is 1.
+Migration SQL and both identifiers commit in one immediate transaction. Startup
+refuses nonempty unversioned databases, incorrect application IDs and newer versions.
+Expected tables, index and triggers are checked; missing objects are reported,
+not silently recreated. `doctor` opens existing storage without migrations.
+
+Differences from the original design sketch below:
+
+- Source counts are maintained by the insert/delete/update triggers, including
+  moves between sources and source deletion cascades.
+- The update trigger handles any record update, including an integer rowid change.
+- Creation timestamps default to UTC; metadata must be a valid JSON object.
+- `import_jobs` statuses are constrained. Source deletion sets its job references
+  to NULL, retaining historical counts rather than blocking deletion.
+- The repository uses typed UUIDs and canonical UUID strings in SQLite. It bounds
+  record text plus JSON metadata at 1 MiB, validates nonblank/NUL-free required
+  text, and limits source listing pages to 1–200 (default convention: 50).
+
+`seed` defaults to 1,000 rows, accepts 1–100,000, and uses generator v1 with no RNG.
+Its fixed UUID-v5 namespace and zero-based ordinal produce stable record IDs;
+content and JSON metadata are deterministic. Creation timestamps are actual write
+times. A seed source, job, records and post-seed index rebuild commit together,
+with health checks before writes and before commit. Repeated seeds fail explicitly.
+Failed seed transactions leave neither partial rows nor misleading job counts.
+
+`doctor` checks SQLite integrity, foreign keys, source counts and FTS5's
+`integrity-check` with `rank=1` to compare the index against external content.
+It does not rebuild or repair. An explicit repository rebuild method is tested but
+is not exposed as a CLI command. Search grammar, BM25 queries and imports below
+are still specifications for later phases; no raw MATCH interface is exposed.
+
+## Original schema design sketch
+
+This sketch explains the model; use the versioned migration for the executable schema.
 
 ```sql
 PRAGMA foreign_keys = ON;

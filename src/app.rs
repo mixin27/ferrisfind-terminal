@@ -3,6 +3,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::domain::Record;
 
 mod event_loop;
+pub mod storage_commands;
 pub use event_loop::run;
 
 pub const QUERY_LIMIT: usize = 256;

@@ -1,3 +1,5 @@
+pub mod persistence;
+
 /// Display fixture, not an imported or persisted record.
 #[derive(Clone, Debug)]
 pub struct Record {
